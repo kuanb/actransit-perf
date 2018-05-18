@@ -1,6 +1,8 @@
-from datetime import datetime
+import colorsys
+import datetime
 import json
 import os
+import random
 import sys
 import time
 
@@ -10,150 +12,203 @@ import pandas as pd
 #       to local tempfile
 day_dir = 'busdata2/'
 
-# Make sure that we only are reviewing the JSON files
-to_use = []
-for c in os.listdir(day_dir):
-    fpath = '{}{}'.format(day_dir, c)
-    if fpath.endswith('.json'):
-        c2 = int(c.replace('.json', ''))
-        t = datetime.fromtimestamp(c2)
-        to_use.append(fpath)
 
-# We will be assembling 2 daily wrap up CSVs
-routes_results = []
-vehicle_res_tracker = {}
-vehicle_results = []
+def get_random_bright_color():
+    h, s, l = random.random(), 0.5 + random.random()/2.0, 0.4 + random.random()/5.0
+    r, g, b = [int(256*i) for i in colorsys.hls_to_rgb(h,l,s)]
+    return '#%02x%02x%02x' % (r, g, b)
 
-# Iterate through the days' data
-for fpath in to_use:
-    # Try to load the vehicle locations as json
-    data = None
-    try:
-        with open(fpath, mode='r') as f:
-            data = json.load(f)
-    # Though some requests returned invalid data, in
-    # which case make a note of it and move on
-    except Exception as e:
-        print('Error opening {}'.format(fpath), e)
-        continue
+
+def add_colors_to_routes(vr: pd.DataFrame):
+    route_color_lookup = []
+    for vid in vr.route_id.unique():
+        route_color_lookup.append({
+            'route_id': vid,
+            'color': get_random_bright_color()
+        })
+        
+    # Convert color lookup to a dataframe
+    color_lookup = pd.DataFrame(route_color_lookup)
     
-    # We make certain assumptions about the data structure scraped
-    for d in data:
-        route_id = d['RouteId']
+    # Make sure the target column has the right type for both sides
+    color_lookup['route_id'] = color_lookup['route_id'].astype(str)
+    vr['route_id'] = vr['route_id'].astype(str)
+    
+    # Merge in the new column
+    return pd.merge(vr, color_lookup, how='left', on='route_id')
 
-        # Don't add unneeded route data (we just need metadata for a route once
-        # for each discrete route)
-        already_have = any(x['id'] == route_id for x in routes_results)
-        if not already_have:
-            routes_results.append({
-                'id': route_id,
-                'name': d['Name'],
-                'description': d['Description']
-            })
+
+# Helper functions
+def summarize(entity):
+    # Bail early if it is not parseable dict
+    if not isinstance(entity, dict):
+        print("1", entity)
+        return None
+
+    veh = entity['vehicle']
+    lat = float(veh['position']['latitude'])
+    lon = float(veh['position']['longitude'])
+
+    if 'speed' in veh['position']:
+        speed = float(veh['position']['speed'])
+    else:
+        speed = None
+
+    timestamp = datetime.datetime.utcfromtimestamp(int(veh['timestamp']))
+    route_id = veh['trip']['routeId']
+    trip_id = veh['trip']['tripId']
+    vehicle_id = veh['vehicle']['id']
+    
+    return {
+        'route_id': route_id,
+        'trip_id': trip_id,
+        'vehicle_id': vehicle_id,
+        'timestamp': timestamp,
+        'lat': lat,
+        'lon': lon,
+        'speed': speed,
+    }
+
+
+def get_all_possible_jsons(target_dir):
+    # Make sure that we only are reviewing the JSON files
+    to_use = []
+    for c in os.listdir(target_dir):
+        fpath = '{}{}'.format(day_dir, c)
+        if fpath.endswith('.json'):
+            c2 = int(c.replace('.json', ''))
+            t = datetime.datetime.fromtimestamp(c2)
+            to_use.append(fpath)
+    return to_use
+
             
-            # Also add to our "tracker" which helps prevent
-            # redundant vehicle traces
-            vehicle_res_tracker[route_id] = {}
+def generate_vehicle_results_df(to_use: list):
+    # We will be assembling 2 daily wrap up CSVs
+    vehicle_results = []
 
-        for v in d['vehicles']:
+    # Iterate through the days' data
+    for fpath in to_use:
+        # Try to load the vehicle locations as json
+        data = None
+        try:
+            with open(fpath, mode='r') as f:
+                data = json.load(f)
+        # Though some requests returned invalid data, in
+        # which case make a note of it and move on
+        except Exception as e:
+            print('Error opening {}'.format(fpath), e)
+            continue
+
+        # Make sure the data saved is what we expects
+        data_ok = False
+        if isinstance(data, dict):
+            if 'entity' in data.keys():
+                data_ok = True
+            else:
+                print('Data missing \'entity\' key: {}'.format(data))
+        else:
+            print('Data invalid format: {}'.format(data))
+
+        # Skip if the data is not usable
+        if not data_ok:
+            continue
+
+        # We make certain assumptions about the data structure scraped
+        cleaned = []
+        for d in data['entity']:
             try:
-                parsed_time = datetime.strptime(v['TimeLastReported'], '%Y-%m-%dT%H:%M:%S')
-                parsed_secs = time.mktime(parsed_time.timetuple())
-                
-                # TODO: Refactor this check blob
-                # Now we need to first make sure that we have not already
-                # added this vehicle trace into our lookup and, if we have,
-                # we should skip it
-                ADD_OK = True
-                
-                # First, it needs to have the trip
-                trip_id = v['CurrentTripId']
-                vid = v['VehicleId']
-                
-                vrt_route = vehicle_res_tracker[route_id]
-                if trip_id in vrt_route.keys():
-                    vrt_trip = vrt_route[trip_id]
-                    
-                    if vid in vrt_trip.keys():
-                        # If it does, does it already have this time
-                        # reported for this route-trip-vehicle combo?
-                        if parsed_secs in vrt_trip:
-                            ADD_OK = False
-                    else:
-                        vrt_route[trip_id][vid] = []
-                else:
-                    # Create the lookup component
-                    vrt_route[trip_id] = {}
-                    vrt_route[trip_id][vid] = []
-
-                if ADD_OK:
-                    # Update both the lookup and the final data array
-                    vrt_route[trip_id][vid].append(parsed_time)
-                    vehicle_results.append({
-                        'trip_id': trip_id,
-                        'route_id': route_id,
-                        'heading': v['Heading'],
-                        'lat': v['Latitude'],
-                        'lon': v['Longitude'],
-                        'id': vid,
-                        'time': parsed_time
-                    })
+                sd = summarize(d)
+                if sd is not None:
+                    cleaned.append(sd)
             except Exception as e:
-                print('Something happened parsing vehicle {}: {}'.format(v, e))
+                print('Error parsing an entity: {}'.format(e))
+
+        if len(cleaned):
+            vehicle_results.extend(cleaned)
+        else:
+            print('{} had no valid location data'.format(path))
+
+        # Probably unnecessary, but since we are dealing with
+        # so much data, better to aggressively flush the data being read in
+        data = None
+
+    # At this point, we should be able to conver the results
+    # lists into 2 dataframes
+    vehicle_results = pd.DataFrame(vehicle_results)
+    vr_trimmed = vehicle_results.drop_duplicates(subset=['trip_id', 'vehicle_id', 'timestamp'])
+    print('Removed duplicates from vehicle trace count '
+          '({} to {} rows)'.format(len(vehicle_results), len(vr_trimmed)))
     
-    # Probably unnecessary, but since we are dealing with
-    # so much data, better to aggressively flush the data being read in
-    data = None
+    # Then add colors to the result before returning
+    vr_with_colors = add_colors_to_routes(vr_trimmed)
+    return vr_with_colors
 
-# At this point, we should be able to conver the results
-# lists into 2 dataframes
-routes_results = pd.DataFrame(routes_results)
-vehicle_results = pd.DataFrame(vehicle_results)
 
-# Some more housekeeping/notetaking logging
-veh_size = sys.getsizeof(vehicle_results) / 1000000.0
-print('Parsed vehicles dataset for the day is {} mb'.format(veh_size))
-
-res = {}
-for trip_id in vehicle_results.trip_id.unique():
-    vrsub = vehicle_results[vehicle_results.trip_id == trip_id]
-    vrsub = vrsub.sort_values('time')
-    vrsub = vrsub.drop_duplicates(subset='time', keep='first')
-    res[trip_id] = len(vrsub)
-
-all_features = []
-
-for target_trip_id in [i for i, v in res.items()]:
-    vrsub = vehicle_results[vehicle_results.trip_id == target_trip_id]
-    vrsub = vrsub.sort_values('time')
-    vrsub = vrsub.drop_duplicates(subset='time', keep='first')
-    
-    geom = {
-        'type': 'MultiPoint',
-        'coordinates': [[round(float(row['lon']), 5),
-                         round(float(row['lat']), 5)] for i, row in vrsub.iterrows()]
-    }
-    
-    # Skip adding this if not endatetimough data
-    if len(geom['coordinates']) < 10:
-        continueSomething
-
+def create_geometies(df):
     feature = {
-          'type': 'Feature',
-          'properties': {
-              'route_id': str(vrsub.route_id.values[0]),
-              'trip_id': str(target_trip_id)
-          },
-          'geometry': geom
+        'type': 'Feature',
+        'properties': {
+            'route_id': df.route_id.values[0],
+            'trip_id': df.trip_id.values[0],
+            'vehicle_id': df.vehicle_id.values[0],
+            'color': df.color.values[0],
+        },
+        'geometry': {
+            'type': 'LineString',
+            'coordinates': [list(ll) for ll in zip(df.lon, df.lat)]
+        }
     }
+    return feature
 
-    all_features.append(feature)
 
-fc = {
-    'type': 'FeatureCollection',
-    'features': all_features
-}
+def nested_feature_geom_rollup(df):
+    return df.groupby('route_id').apply(create_geometies)
+
+
+def generate_sorted_feature_collections(vehicle_results: pd.DataFrame):
+    vr_sorted = vehicle_results.sort_values(by='timestamp')
+    nested_features = vr_sorted.groupby(pd.Grouper(freq='10Min', key='timestamp')).apply(nested_feature_geom_rollup)
+
+    unique_secs = []
+    super_fc = {}
+    for i, feat in nested_features.iteritems():
+        # First get the time in seconds
+        timelevel = i[0]
+        epoch = datetime.datetime.utcfromtimestamp(0)
+        secs = (timelevel.to_pydatetime() - epoch).total_seconds()
+        secs = int(secs)
+        secs = str(secs)
+
+        # Other index is just the route
+        route_id = i[1]
+
+        # Catch initializer
+        if secs not in super_fc.keys():
+            super_fc[secs] = {
+                'type': 'FeatureCollection',
+                'features': []
+            }
+
+        super_fc[secs]['features'].append(feat)
+        # Also used for next step
+        unique_secs.append(secs)
+
+    # Then convert the whole thing into a list instead of a nested dict
+    as_int = [int(x) for x in list(set(unique_secs))]
+    as_str = [str(x) for x in sorted(as_int)]
+
+    super_fc_list = []
+    for secs in as_str:
+        super_fc_list.append(super_fc[secs])
+        
+    return super_fc_list
+
+
+# Execution
+list_of_jsons = get_all_possible_jsons(day_dir)
+vehicle_results = generate_vehicle_results_df(list_of_jsons)
+sorted_fcs = generate_sorted_feature_collections(vehicle_results)
 
 import json
 with open('daily.json', 'w') as outfile:
-    json.dump(fc, outfile)
+    json.dump(sorted_fcs, outfile)
