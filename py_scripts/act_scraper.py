@@ -17,7 +17,7 @@ def get_daily_dir():
     target_dir = 'busdata/{}'.format(curr_day)
     if not os.path.exists(target_dir):
         os.mkdir(target_dir)
-    return curr_day
+    return target_dir
 
 
 def get_routes_url(token):
@@ -62,4 +62,5 @@ while True:
     with open(output_fpath, 'w') as outfile:
         json.dump(output_packaged, outfile)
 
+    print('\n')
     time.sleep(30)
