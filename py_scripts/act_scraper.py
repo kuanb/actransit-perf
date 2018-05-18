@@ -1,15 +1,27 @@
+import glob
 import json
 import os
 import requests
 import time
 import random
 
+from google.protobuf import json_format
+from google.transit import gtfs_realtime_pb2
+
 # Globals
 AC_BASE_URL = 'http://api.actransit.org/transit'
 
 # TODO: These should be acquired through a .env variable passed
 #       to the workers doing the data acquisition
-tokens = ['***']
+tokens = [
+    '***'
+]
+
+
+def convert_pb_to_json(content):
+    feed = gtfs_realtime_pb2.FeedMessage()
+    feed.ParseFromString(content)
+    return json.loads(json_format.MessageToJson(feed))
 
 
 def get_daily_dir():
@@ -20,13 +32,8 @@ def get_daily_dir():
     return target_dir
 
 
-def get_routes_url(token):
-    return '{}/routes?token={}'.format(AC_BASE_URL, token)
-
-
-def get_vehicles_url(route_name, token):
-    return '{}/route/{}/vehicles?token={}'.format(
-        AC_BASE_URL, route_name, token)
+def get_vehicles_url(token):
+    return '{}/gtfsrt/vehicles?token={}'.format(AC_BASE_URL, token)
 
 
 while True:
@@ -34,33 +41,24 @@ while True:
     # aren't even getting remotely close according to their TOU
     token = random.choice(tokens)
 
-    output = []
-    failed_routes = []
-    for route in requests.get(get_routes_url(token)).json():
-        try:
-            template = get_vehicles_url(route['Name'], token)
-            vehicles = requests.get(template)
-            route['vehicles'] = vehicles.json()
-            output.append(route)
-        except Exception as e:
-            failed_routes.append(route['Name'])
+    # Pull down protobuf
+    template = get_vehicles_url(token)
+    resp = requests.get(template)
+    try:
+        res_json = convert_pb_to_json(resp.content)
+    except Exception as e:
+        print('Error occurred on this query: {}'.format(template))
+        print('Error: {}'.format(e))
+        res_json = False
 
-    if len(failed_routes):
-        failed_routes_str = ','.join([str(x) for x in failed_routes])
-        print('Error on querying routes {}'.format(failed_routes_str))
+    if res_json is not False:
+        # Create output file location
+        seconds = int(round(time.time(), 0))
+        output_fname = '.'.join([str(seconds), 'json'])
+        output_fpath = '/'.join([get_daily_dir(), output_fname])
 
-    seconds = int(round(time.time(), 0))
-    output_fname = '.'.join([str(seconds), 'json'])
-    output_fpath = '/'.join([get_daily_dir(), output_fname])
+        print('Got locations; saving to {}'.format(output_fpath))
+        with open(output_fpath, 'w') as outfile:
+            json.dump(res_json, outfile)
 
-    output_packaged = {
-        'timestamp': seconds,
-        'data': output
-    }
-    
-    print('Got locations; saving to {}'.format(output_fpath))
-    with open(output_fpath, 'w') as outfile:
-        json.dump(output_packaged, outfile)
-
-    print('\n')
     time.sleep(30)
