@@ -74,7 +74,7 @@ def get_all_possible_jsons(target_dir):
     # Make sure that we only are reviewing the JSON files
     to_use = []
     for c in os.listdir(target_dir):
-        fpath = '{}{}'.format(day_dir, c)
+        fpath = '{}{}'.format(target_dir, c)
         if fpath.endswith('.json'):
             c2 = int(c.replace('.json', ''))
             t = datetime.datetime.fromtimestamp(c2)
@@ -145,6 +145,7 @@ def generate_vehicle_results_df(to_use: list):
 
 
 def create_geometies(df):
+    df = df.sort_values(by='timestamp')
     feature = {
         'type': 'Feature',
         'properties': {
@@ -162,7 +163,7 @@ def create_geometies(df):
 
 
 def nested_feature_geom_rollup(df):
-    return df.groupby('route_id').apply(create_geometies)
+    return df.groupby('vehicle_id').apply(create_geometies)
 
 
 def generate_sorted_feature_collections(vehicle_results: pd.DataFrame):
