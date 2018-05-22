@@ -26,10 +26,17 @@ def convert_pb_to_json(content):
 
 
 def get_daily_dir():
+    # Also make sure the parent dir exists, every time
+    if not os.path.exists('busdata'):
+        os.mkdir('busdata')
+
+    # Then make sure the day's directory is present
     curr_day = time.strftime('%Y%m%d')
     target_dir = 'busdata/{}'.format(curr_day)
     if not os.path.exists(target_dir):
         os.mkdir(target_dir)
+
+    # Return the location of the day directory
     return target_dir
 
 
