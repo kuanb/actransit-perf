@@ -1,2 +1,3 @@
-source .env
-python py_scripts/act_scraper.py
+run_scraper:
+	source .env
+	python py_scripts/act_scraper.py
