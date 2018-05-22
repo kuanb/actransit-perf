@@ -15,7 +15,8 @@ AC_BASE_URL = 'http://api.actransit.org/transit'
 token_env_var = 'ACT_GTFSRT_TOKENS'
 if token_env_var not in os.environ:
     raise KeyError('No tokens set under {} in .env file'.format(token_env_var))
-tokens = os.environ[token_env_var]
+tokens = os.environ[token_env_var].split(' ')  # Use space deliminated keys
+print('Using {} tokens'.format(len(tokens)))
 
 
 def convert_pb_to_json(content):
