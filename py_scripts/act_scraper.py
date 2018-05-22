@@ -11,11 +11,11 @@ from google.transit import gtfs_realtime_pb2
 # Globals
 AC_BASE_URL = 'http://api.actransit.org/transit'
 
-# TODO: These should be acquired through a .env variable passed
-#       to the workers doing the data acquisition
-tokens = [
-    '***'
-]
+# Acquire the tokens from the .env file in root
+token_env_var = 'ACT_GTFSRT_TOKENS'
+if token_env_var not in os.environ:
+    raise KeyError('No tokens set under {} in .env file'.format(token_env_var))
+tokens = os.environ[token_env_var]
 
 
 def convert_pb_to_json(content):
