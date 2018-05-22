@@ -1,3 +1,3 @@
 run_scraper:
-	source .env
-	python py_scripts/act_scraper.py
+	bash -c "source .env"
+	bash -c "python py_scripts/act_scraper.py"
