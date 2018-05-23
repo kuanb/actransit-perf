@@ -19,7 +19,7 @@ for day_dir in all_day_directories:
         if filename.endswith('.json'):
             fpath = os.path.join(full_day_dir_path, filename)
             to_upload.append((fpath, day_dir))
-to_upload = to_upload[:5]
+
 upload_command = []
 for fpath, day_dir in to_upload:
     # First we want to upload the file
