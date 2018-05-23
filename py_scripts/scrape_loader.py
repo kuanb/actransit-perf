@@ -22,6 +22,7 @@ for day_dir in all_day_directories:
 
 upload_command = []
 for fpath, day_dir in to_upload:
+    # First we want to upload the file
     new_cmd = _format_gcloud_bash(fpath, day_dir)
     upload_command.append(new_cmd)
 
@@ -30,3 +31,5 @@ single_bash = ' && '.join(upload_command[:5])
 
 # Now actually run the commands altogether
 subprocess.Popen(['/bin/bash', '-c', single_bash])
+
+print('This should happen afterwards')
