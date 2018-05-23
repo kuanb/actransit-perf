@@ -1,7 +1,7 @@
 import subprocess
 import os
 
-def _format_gcloud_bash(filepath: str, day_dir: str) -> str:
+def _format_gcloud_bash(filepath, day_dir):
     template = 'sudo gsutil cp {} gs://ac-transit/traces/{}/'
     formatted = template.format(filepath, day_dir)
     return formatted
