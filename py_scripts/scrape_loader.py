@@ -1,6 +1,11 @@
 import subprocess
 import os
 
+def _format_gcloud_bash(filepath: str, day_dir: str) -> str:
+    template = 'sudo gsutil cp {} gs://ac-transit/traces/{}/'
+    formatted = template.format(filepath, day_dir)
+    return formatted
+
 # First, get all directories in busdata
 main_dir = 'busdata'
 all_day_directories = [g for g in os.walk(main_dir)][0][1]
@@ -12,8 +17,17 @@ for day_dir in all_day_directories:
 
     for filename in os.listdir(full_day_dir_path):
         if filename.endswith('.json'):
-            print('filename', filename)
-            # to_upload.append(to_upload)
+            fpath = os.path.join(full_day_dir_path, filename)
+            to_upload.append((fpath, day_dir))
 
+upload_command = []
+for fpath, day_dir in to_upload:
+    new_cmd = _format_gcloud_bash(fpath, day_dir)
+    upload_command.append(new_cmd)
+
+# Now concat them all to a single command
+single_bash = ' && '.join(upload_command)
+
+print(single_bash)
 # args = ['echo', 'Hello!']
 # subprocess.Popen(args)
