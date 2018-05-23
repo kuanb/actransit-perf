@@ -36,5 +36,5 @@ process = subprocess.Popen(['/bin/bash', '-c', single_bash])
 process.wait()
 
 # Now we can remove those files that were uploaded
-print(p.returncode)
+print(process.returncode)
 print('This should happen afterwards')
