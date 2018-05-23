@@ -19,7 +19,7 @@ for day_dir in all_day_directories:
         if filename.endswith('.json'):
             fpath = os.path.join(full_day_dir_path, filename)
             to_upload.append((fpath, day_dir))
-
+to_upload = to_upload[:5]
 upload_command = []
 for fpath, day_dir in to_upload:
     # First we want to upload the file
@@ -27,7 +27,7 @@ for fpath, day_dir in to_upload:
     upload_command.append(new_cmd)
 
 # Now concat them all to a single command
-single_bash = ' && '.join(upload_command[:5])
+single_bash = ' && '.join(upload_command)
 
 # Now actually run the commands altogether
 process = subprocess.Popen(['/bin/bash', '-c', single_bash])
@@ -36,5 +36,5 @@ process = subprocess.Popen(['/bin/bash', '-c', single_bash])
 process.wait()
 
 # Now we can remove those files that were uploaded
-print(process.returncode)
-print('This should happen afterwards')
+for fpath, _ in to_upload:
+    os.remove(fpath)
