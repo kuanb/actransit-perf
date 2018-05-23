@@ -30,6 +30,11 @@ for fpath, day_dir in to_upload:
 single_bash = ' && '.join(upload_command[:5])
 
 # Now actually run the commands altogether
-subprocess.Popen(['/bin/bash', '-c', single_bash])
+process = subprocess.Popen(['/bin/bash', '-c', single_bash])
 
+# Block all further python ops until process completes
+process.wait()
+
+# Now we can remove those files that were uploaded
+print(p.returncode)
 print('This should happen afterwards')
