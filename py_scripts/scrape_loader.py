@@ -1,40 +1,51 @@
 import subprocess
 import os
 
+
 def _format_gcloud_bash(filepath, day_dir):
     template = 'sudo gsutil cp {} gs://ac-transit/traces/{}/'
     formatted = template.format(filepath, day_dir)
     return formatted
 
-# First, get all directories in busdata
-main_dir = 'busdata'
-all_day_directories = [g for g in os.walk(main_dir)][0][1]
 
-# Craft a full list of paths to upload
-to_upload = []
-for day_dir in all_day_directories:
-    full_day_dir_path = os.path.join(main_dir, day_dir)
+def sync_storage_from_local():
+    # First, get all directories in busdata
+    main_dir = 'busdata'
+    all_day_directories = [g for g in os.walk(main_dir)][0][1]
 
-    for filename in os.listdir(full_day_dir_path):
-        if filename.endswith('.json'):
-            fpath = os.path.join(full_day_dir_path, filename)
-            to_upload.append((fpath, day_dir))
+    # Craft a full list of paths to upload
+    to_upload = []
+    for day_dir in all_day_directories:
+        full_day_dir_path = os.path.join(main_dir, day_dir)
 
-upload_command = []
-for fpath, day_dir in to_upload:
-    # First we want to upload the file
-    new_cmd = _format_gcloud_bash(fpath, day_dir)
-    upload_command.append(new_cmd)
+        for filename in os.listdir(full_day_dir_path):
+            if filename.endswith('.json'):
+                fpath = os.path.join(full_day_dir_path, filename)
+                to_upload.append((fpath, day_dir))
 
-# Now concat them all to a single command
-single_bash = ' && '.join(upload_command)
+    upload_command = []
+    for fpath, day_dir in to_upload:
+        # First we want to upload the file
+        new_cmd = _format_gcloud_bash(fpath, day_dir)
+        upload_command.append(new_cmd)
 
-# Now actually run the commands altogether
-process = subprocess.Popen(['/bin/bash', '-c', single_bash])
+    # Now concat them all to a single command
+    single_bash = ' && '.join(upload_command)
 
-# Block all further python ops until process completes
-process.wait()
+    # Now actually run the commands altogether
+    process = subprocess.Popen(['/bin/bash', '-c', single_bash])
 
-# Now we can remove those files that were uploaded
-for fpath, _ in to_upload:
-    os.remove(fpath)
+    # Block all further python ops until process completes
+    process.wait()
+
+    # Now we can remove those files that were uploaded
+    for fpath, _ in to_upload:
+        os.remove(fpath)
+
+
+# Start this python process
+while True:
+    sync_storage_from_local()
+
+    # Run this every minute
+    time.sleep(60)
