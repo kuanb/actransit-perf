@@ -1,5 +1,6 @@
-import subprocess
 import os
+import subprocess
+import time
 
 
 def _format_gcloud_bash(filepath, day_dir):
