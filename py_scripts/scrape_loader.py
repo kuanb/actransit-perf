@@ -26,8 +26,7 @@ for fpath, day_dir in to_upload:
     upload_command.append(new_cmd)
 
 # Now concat them all to a single command
-single_bash = ' && '.join(upload_command)
+single_bash = ' && '.join(upload_command[:5])
 
-print(single_bash)
-# args = ['echo', 'Hello!']
-# subprocess.Popen(args)
+# Now actually run the commands altogether
+subprocess.Popen(['/bin/bash', '-c', single_bash])
