@@ -12,6 +12,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from shapely.geometry import LineString, Point
+import tweepy
 
 import matplotlib
 matplotlib.use('Agg')
