@@ -316,9 +316,14 @@ def plot_grouped_route_trace_results(grouped):
 
 # Run when this script is invoked
 if __name__ == '__main__':
+    # Make sure that busdata_raw exists
+    dest_dir = 'busdata_raw'
+    if not os.path.exists(dest_dir):
+        os.makedirs(dest_dir)
+
     # First pull down the previous day's images
     tod = datetime.date.today().isoformat().replace('-', '')
-    formatted_command = 'gsutil cp gs://ac-transit/traces/{}/* busdata_raw/'.format(tod)
+    formatted_command = 'gsutil cp gs://ac-transit/traces/{}/* {}/'.format(tod, dest_dir)
     ret = os.system(formatted_command)
     if ret != 0 :
         print('The gustil command to pull down a day\'s worth of traces failed.')
