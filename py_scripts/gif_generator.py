@@ -7,10 +7,13 @@ import random
 import time
 
 import geopandas as gpd
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from shapely.geometry import LineString, Point
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 SECONDS_RESOLUTION = 10
 
