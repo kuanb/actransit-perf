@@ -19,6 +19,18 @@ import matplotlib.pyplot as plt
 SECONDS_RESOLUTION = 10
 
 
+def get_env_var(env_var):
+    if env_var not in os.environ:
+        raise KeyError('No tokens set under {} in .env file'.format(env_var))
+    return str(os.environ[env_var])
+
+
+CONSUMER_KEY = get_env_var('CONSUMER_KEY')
+CONSUMER_SECRET = get_env_var('CONSUMER_SECRET')
+ACCESS_KEY = get_env_var('ACCESS_KEY')
+ACCESS_SECRET = get_env_var('ACCESS_SECRET')
+
+
 def parse_filename_as_datetime(filename):
     secs = filename.split('/')[-1].split('.')[0]
     secs = int(secs)
@@ -322,6 +334,13 @@ def plot_grouped_route_trace_results(start, end, grouped):
         count += 1
 
 
+def tweet(gif_loc):
+    auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+    auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
+    api = tweepy.API(auth)
+    api.update_with_media(gif_loc, status='')
+
+
 # Run when this script is invoked
 if __name__ == '__main__':
     # Make sure that busdata_raw exists
@@ -338,13 +357,20 @@ if __name__ == '__main__':
 
     # Make sure that output_dir exists, so resulting files can be saved to
     # this director adn clear out previous outputs
-    output_dir = 'gif'
-    if os.path.exists(output_dir):
-        shutil.rmtree(output_dir)
-    os.makedirs(output_dir)
+    # output_dir = 'gif'
+    # if os.path.exists(output_dir):
+    #     shutil.rmtree(output_dir)
+    # os.makedirs(output_dir)
 
-    target_filepaths = get_busiest_hour_filepaths('busdata_raw/')
-    compiled = generate_trace_dfs_reference(target_filepaths)
-    start, end = get_plot_timeframe(compiled)
-    grouped = clean_and_group_route_traces(compiled)
-    plot_grouped_route_trace_results(start, end, grouped)
+    # target_filepaths = get_busiest_hour_filepaths('busdata_raw/')
+    # compiled = generate_trace_dfs_reference(target_filepaths)
+    # start, end = get_plot_timeframe(compiled)
+    # grouped = clean_and_group_route_traces(compiled)
+    # plot_grouped_route_trace_results(start, end, grouped)
+
+    command = 'convert -delay 20 -loop 0 gif/*.png  gif/animate.gif'
+    ret = os.system(command)
+    if ret != 0 :
+        print('The convert imagemagick command to compile into gif failed.')
+    else:
+        tweet('gif/animate.gif')
