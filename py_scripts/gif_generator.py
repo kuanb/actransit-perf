@@ -4,6 +4,7 @@ import json
 import math
 import os
 import random
+import shutil
 import time
 
 import geopandas as gpd
@@ -330,6 +331,13 @@ if __name__ == '__main__':
     # ret = os.system(formatted_command)
     # if ret != 0 :
     #     print('The gustil command to pull down a day\'s worth of traces failed.')
+
+    # Make sure that output_dir exists, so resulting files can be saved to
+    # this director adn clear out previous outputs
+    output_dir = 'gif'
+    if os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
+    os.makedirs(output_dir)
 
     target_filepaths = get_busiest_hour_filepaths('busdata_raw/')
     compiled = generate_trace_dfs_reference(target_filepaths)
