@@ -90,6 +90,9 @@ def get_busiest_hour_filepaths(target_directory):
                     'v': val
                 }
 
+    # Report back what the peak hour was
+    print('Peak day: {}, and hour: {}'.format(peak['d'], peak['h']))
+
     # Now that we know the day and hour, go back through the
     # original potential .json files and subselect just the ones
     # that fall in our desired day-hour bracket of time
