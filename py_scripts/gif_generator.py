@@ -7,6 +7,7 @@ import random
 import shutil
 import time
 
+import dotenv
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -24,7 +25,7 @@ def get_env_var(env_var):
         raise KeyError('No tokens set under {} in .env file'.format(env_var))
     return str(os.environ[env_var])
 
-
+dotenv.load()  # Make sure we load in the .env file
 CONSUMER_KEY = get_env_var('CONSUMER_KEY')
 CONSUMER_SECRET = get_env_var('CONSUMER_SECRET')
 ACCESS_KEY = get_env_var('ACCESS_KEY')
