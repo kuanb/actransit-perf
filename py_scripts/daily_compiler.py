@@ -10,7 +10,7 @@ import pandas as pd
 
 # TODO: Load source using GCloud utils, download
 #       to local tempfile
-day_dir = 'busdata2/'
+day_dir = 'busdata_raw/'
 
 
 def get_random_bright_color():
