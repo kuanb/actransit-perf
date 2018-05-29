@@ -103,7 +103,7 @@ def get_busiest_hour_filepaths(target_directory):
         same_hour = str(dt.hour) == str(peak['h'])
         if same_day and same_hour:
             keep_filepaths.append(tf)
-            
+
     # Return the subset of filepaths that
     # are in the timeframe we want to evaluate
     return keep_filepaths
@@ -275,7 +275,9 @@ def get_plot_timeframe(compiled):
 def plot_grouped_route_trace_results(grouped):
     color_lookup = generate_color_lookup(grouped)
     start, end = get_plot_timeframe(compiled)
-    curr_thresh = start + 10
+    print('Start of analysis period: {}\nEnd of analysis period: {}'.format(start, end))
+
+    curr_thresh = start + SECONDS_RESOLUTION
     count = 0
     while curr_thresh <= end:
         curr_thresh = start + (count * SECONDS_RESOLUTION)
