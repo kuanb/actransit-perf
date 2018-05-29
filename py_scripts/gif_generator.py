@@ -340,7 +340,7 @@ def tweet(gif_loc):
     auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
     auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
     api = tweepy.API(auth)
-    api.update_with_media(gif_loc, status='')
+    api.update_with_media(gif_loc)
 
 
 # Run when this script is invoked
