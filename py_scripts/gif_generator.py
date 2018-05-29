@@ -323,10 +323,10 @@ if __name__ == '__main__':
 
     # First pull down the previous day's images
     tod = datetime.date.today().isoformat().replace('-', '')
-    formatted_command = 'gsutil cp gs://ac-transit/traces/{}/* {}/'.format(tod, dest_dir)
-    ret = os.system(formatted_command)
-    if ret != 0 :
-        print('The gustil command to pull down a day\'s worth of traces failed.')
+    # formatted_command = 'gsutil cp gs://ac-transit/traces/{}/* {}/'.format(tod, dest_dir)
+    # ret = os.system(formatted_command)
+    # if ret != 0 :
+    #     print('The gustil command to pull down a day\'s worth of traces failed.')
 
     target_filepaths = get_busiest_hour_filepaths('busdata_raw/')
     compiled = generate_trace_dfs_reference(target_filepaths)
