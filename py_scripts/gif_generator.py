@@ -263,11 +263,11 @@ def get_plot_timeframe(compiled):
     maximum = None
     for key in compiled.keys():
         mi = compiled[key].timestamp.min()
-        if minimum is None or minimum < mi:
+        if minimum is None or minimum > mi:
             minimum = mi
 
         ma = compiled[key].timestamp.max()
-        if maximum is None or maximum > ma:
+        if maximum is None or maximum < ma:
             maximum = ma
     return (minimum, maximum)
 
