@@ -267,14 +267,13 @@ def get_plot_timeframe(compiled):
             minimum = mi
 
         ma = compiled[key].timestamp.max()
-        if maximum is None or maximum < ma:
+        if maximum is None or maximum > ma:
             maximum = ma
     return (minimum, maximum)
 
 
-def plot_grouped_route_trace_results(grouped):
+def plot_grouped_route_trace_results(start, end, grouped):
     color_lookup = generate_color_lookup(grouped)
-    start, end = get_plot_timeframe(compiled)
     print('Start of analysis period: {}\nEnd of analysis period: {}'.format(start, end))
 
     curr_thresh = start + SECONDS_RESOLUTION
@@ -346,5 +345,6 @@ if __name__ == '__main__':
 
     target_filepaths = get_busiest_hour_filepaths('busdata_raw/')
     compiled = generate_trace_dfs_reference(target_filepaths)
+    start, end = get_plot_timeframe(compiled)
     grouped = clean_and_group_route_traces(compiled)
-    plot_grouped_route_trace_results(grouped)
+    plot_grouped_route_trace_results(start, end, grouped)
