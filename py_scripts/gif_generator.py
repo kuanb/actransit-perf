@@ -369,7 +369,7 @@ if __name__ == '__main__':
     # grouped = clean_and_group_route_traces(compiled)
     # plot_grouped_route_trace_results(start, end, grouped)
 
-    command = 'convert -delay 20 -loop 0 gif/*.png  gif/animate.gif'
+    command = 'convert -limit memory 32 -delay 20 -loop 0 gif/*.png  gif/animate.gif'
     ret = os.system(command)
     if ret != 0 :
         print('The convert imagemagick command to compile into gif failed.')
