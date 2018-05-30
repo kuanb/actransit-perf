@@ -381,7 +381,7 @@ if __name__ == '__main__':
     # if ret != 0 :
     #     print('The convert imagemagick command to compile into gif failed.')
 
-    command = 'gifsicle -O1 gif/animate.gif -o gif/animate2.gif'
+    command = 'gifsicle -O1 gif/animate.gif -o gif/animate.gif'
     ret = os.system(command)
     if ret != 0 :
         print('The gifsicle optimization step failed.')
