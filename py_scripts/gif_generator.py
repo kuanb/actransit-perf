@@ -338,10 +338,15 @@ def plot_grouped_route_trace_results(start, end, grouped):
 
 
 def tweet(gif_loc):
-    auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-    auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
-    api = tweepy.API(auth)
-    api.update_with_media(gif_loc)
+    # auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+    # auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
+    # api = tweepy.API(auth)
+    # api.update_with_media(gif_loc)
+    from twython import Twython
+    twitter = Twython(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_KEY, ACCESS_SECRET)
+    photo = open('gif/animate.gif', 'rb')
+    response = twitter.upload_media(media=photo)
+    twitter.update_status(status='Today\'s peak', media_ids=[response['media_id']])
 
 
 # Run when this script is invoked
@@ -371,7 +376,7 @@ if __name__ == '__main__':
     # grouped = clean_and_group_route_traces(compiled)
     # plot_grouped_route_trace_results(start, end, grouped)
 
-    command = 'convert -limit memory 100MB -delay 20 -loop 0 gif/*.png  gif/animate.gif'
+    command = 'convert -limit memory 100MB -delay 10 -loop 0 gif/*.png  gif/animate.gif'
     command = 'echo foo'
     ret = os.system(command)
     if ret != 0 :
