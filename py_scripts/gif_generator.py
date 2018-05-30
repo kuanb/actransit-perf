@@ -290,6 +290,7 @@ def get_plot_timeframe(compiled):
 def plot_grouped_route_trace_results(start, end, grouped):
     color_lookup = generate_color_lookup(grouped)
     print('Start of analysis period: {}\nEnd of analysis period: {}'.format(start, end))
+    print('Estimated coverage time: {}'.format(round((end - start)/60, 2)))
 
     curr_thresh = start + SECONDS_RESOLUTION
     count = 0
@@ -306,8 +307,7 @@ def plot_grouped_route_trace_results(start, end, grouped):
                     most_recent = max(filtered_p, key=lambda x: x['timestamp'])
                     to_plot.append({
                         'p': Point(most_recent['position']),
-                        'color': color_lookup[key]
-                    })
+                        'color': color_lookup[key]})
 
         # TODO: Clarify plotting structure
         # A vat of gobbledegook to poof out a matplotlib chart with little
