@@ -381,10 +381,10 @@ if __name__ == '__main__':
     # if ret != 0 :
     #     print('The convert imagemagick command to compile into gif failed.')
 
-    # command = 'gifsicle -O1 gif/animate.gif -o gif/animate2.gif'
-    # ret = os.system(command)
-    # if ret != 0 :
-    #     print('The gifsicle optimization step failed.')
+    command = 'gifsicle -O1 gif/animate.gif -o gif/animate2.gif'
+    ret = os.system(command)
+    if ret != 0 :
+        print('The gifsicle optimization step failed.')
 
     # Now actually run the commands altogether
     curr_day = time.strftime('%Y%m%d')
