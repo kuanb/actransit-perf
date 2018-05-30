@@ -12,6 +12,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from shapely.geometry import LineString, Point
+import subprocess
 import tweepy
 
 import matplotlib
@@ -371,8 +372,15 @@ if __name__ == '__main__':
     # plot_grouped_route_trace_results(start, end, grouped)
 
     command = 'convert -limit memory 100MB -delay 20 -loop 0 gif/*.png  gif/animate.gif'
+    command = 'echo foo'
     ret = os.system(command)
     if ret != 0 :
         print('The convert imagemagick command to compile into gif failed.')
     else:
+        # Now actually run the commands altogether
+        curr_day = time.strftime('%Y%m%d')
+        bash_cmd = 'sudo gsutil cp gif/animate.gif gs://ac-transit/daily_animated/{}.gif'.format(curr_day)
+        process = subprocess.Popen(['/bin/bash', '-c', bash_cmd])
+        process.wait()
+
         tweet('gif/animate.gif')
