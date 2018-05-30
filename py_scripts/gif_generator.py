@@ -313,7 +313,7 @@ def plot_grouped_route_trace_results(start, end, grouped):
         # A vat of gobbledegook to poof out a matplotlib chart with little
         # care for reproducibility or legibility, just as MPL was intended (!)
         gdf = gpd.GeoDataFrame(to_plot, geometry=[x['p'] for x in to_plot])
-        fig, ax = plt.subplots(figsize=(8,8), facecolor='black')
+        fig, ax = plt.subplots(figsize=(5,5), facecolor='black')
         gdf.plot(ax=ax, column='color', marker='.', markersize=16, cmap='cool')
         # Make the background black, both for the plot and all plots
         plt.style.use('dark_background')
@@ -338,15 +338,15 @@ def plot_grouped_route_trace_results(start, end, grouped):
 
 
 def tweet(gif_loc):
-    # auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-    # auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
-    # api = tweepy.API(auth)
-    # api.update_with_media(gif_loc)
-    from twython import Twython
-    twitter = Twython(ACCESS_KEY, ACCESS_SECRET, CONSUMER_KEY, CONSUMER_SECRET)
-    photo = open('gif/animate.gif', 'rb')
-    response = twitter.upload_media(media=photo)
-    twitter.update_status(status='Today\'s peak', media_ids=[response['media_id']])
+    auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+    auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
+    api = tweepy.API(auth)
+    api.update_with_media(gif_loc)
+    # from twython import Twython
+    # twitter = Twython(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_KEY, ACCESS_SECRET)
+    # photo = open('gif/animate.gif', 'rb')
+    # response = twitter.upload_media(media=photo)
+    # twitter.update_status(status='Today\'s peak', media_ids=[response['media_id']])
 
 
 # Run when this script is invoked
@@ -358,23 +358,23 @@ if __name__ == '__main__':
 
     # First pull down the previous day's images
     tod = datetime.date.today().isoformat().replace('-', '')
-    # formatted_command = 'gsutil cp gs://ac-transit/traces/{}/* {}/'.format(tod, dest_dir)
-    # ret = os.system(formatted_command)
-    # if ret != 0 :
-    #     print('The gustil command to pull down a day\'s worth of traces failed.')
+    formatted_command = 'gsutil cp gs://ac-transit/traces/{}/* {}/'.format(tod, dest_dir)
+    ret = os.system(formatted_command)
+    if ret != 0 :
+        print('The gustil command to pull down a day\'s worth of traces failed.')
 
-    # Make sure that output_dir exists, so resulting files can be saved to
-    # this director adn clear out previous outputs
-    # output_dir = 'gif'
-    # if os.path.exists(output_dir):
-    #     shutil.rmtree(output_dir)
-    # os.makedirs(output_dir)
+    Make sure that output_dir exists, so resulting files can be saved to
+    this director adn clear out previous outputs
+    output_dir = 'gif'
+    if os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
+    os.makedirs(output_dir)
 
-    # target_filepaths = get_busiest_hour_filepaths('busdata_raw/')
-    # compiled = generate_trace_dfs_reference(target_filepaths)
-    # start, end = get_plot_timeframe(compiled)
-    # grouped = clean_and_group_route_traces(compiled)
-    # plot_grouped_route_trace_results(start, end, grouped)
+    target_filepaths = get_busiest_hour_filepaths('busdata_raw/')
+    compiled = generate_trace_dfs_reference(target_filepaths)
+    start, end = get_plot_timeframe(compiled)
+    grouped = clean_and_group_route_traces(compiled)
+    plot_grouped_route_trace_results(start, end, grouped)
 
     command = 'convert -limit memory 100MB -delay 10 -loop 0 gif/*.png  gif/animate.gif'
     command = 'echo foo'
