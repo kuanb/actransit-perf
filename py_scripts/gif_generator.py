@@ -341,7 +341,7 @@ def tweet(gif_loc):
     # auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
     # api = tweepy.API(auth)
     # api.update_with_media(gif_loc)
-
+    from twython import Twython
     twitter = Twython(APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
     photo = open('/gif/animate.gif', 'rb')
     response = twitter.upload_media(media=photo)
