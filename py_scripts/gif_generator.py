@@ -4,15 +4,34 @@ import json
 import math
 import os
 import random
+import shutil
 import time
 
+import dotenv
 import geopandas as gpd
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from shapely.geometry import LineString, Point
+import subprocess
+import tweepy
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 SECONDS_RESOLUTION = 10
+
+
+def get_env_var(env_var):
+    if env_var not in os.environ:
+        raise KeyError('No tokens set under {} in .env file'.format(env_var))
+    return str(os.environ[env_var])
+
+dotenv.load()  # Make sure we load in the .env file
+CONSUMER_KEY = get_env_var('CONSUMER_KEY')
+CONSUMER_SECRET = get_env_var('CONSUMER_SECRET')
+ACCESS_KEY = get_env_var('ACCESS_KEY')
+ACCESS_SECRET = get_env_var('ACCESS_SECRET')
 
 
 def parse_filename_as_datetime(filename):
@@ -86,6 +105,9 @@ def get_busiest_hour_filepaths(target_directory):
                     'v': val
                 }
 
+    # Report back what the peak hour was
+    print('Peak day ({}) hour ({}) count ({})'.format(peak['d'], peak['h'], peak['v']))
+
     # Now that we know the day and hour, go back through the
     # original potential .json files and subselect just the ones
     # that fall in our desired day-hour bracket of time
@@ -96,7 +118,7 @@ def get_busiest_hour_filepaths(target_directory):
         same_hour = str(dt.hour) == str(peak['h'])
         if same_day and same_hour:
             keep_filepaths.append(tf)
-            
+
     # Return the subset of filepaths that
     # are in the timeframe we want to evaluate
     return keep_filepaths
@@ -256,7 +278,7 @@ def get_plot_timeframe(compiled):
     maximum = None
     for key in compiled.keys():
         mi = compiled[key].timestamp.min()
-        if minimum is None or minimum < mi:
+        if minimum is None or minimum > mi:
             minimum = mi
 
         ma = compiled[key].timestamp.max()
@@ -265,10 +287,12 @@ def get_plot_timeframe(compiled):
     return (minimum, maximum)
 
 
-def plot_grouped_route_trace_results(grouped):
+def plot_grouped_route_trace_results(start, end, grouped):
     color_lookup = generate_color_lookup(grouped)
-    start, end = get_plot_timeframe(compiled)
-    curr_thresh = start + 10
+    print('Start of analysis period: {}\nEnd of analysis period: {}'.format(start, end))
+    print('Estimated coverage time: {}'.format(round((end - start)/60, 2)))
+
+    curr_thresh = start + SECONDS_RESOLUTION
     count = 0
     while curr_thresh <= end:
         curr_thresh = start + (count * SECONDS_RESOLUTION)
@@ -283,14 +307,13 @@ def plot_grouped_route_trace_results(grouped):
                     most_recent = max(filtered_p, key=lambda x: x['timestamp'])
                     to_plot.append({
                         'p': Point(most_recent['position']),
-                        'color': color_lookup[key]
-                    })
+                        'color': color_lookup[key]})
 
         # TODO: Clarify plotting structure
         # A vat of gobbledegook to poof out a matplotlib chart with little
         # care for reproducibility or legibility, just as MPL was intended (!)
         gdf = gpd.GeoDataFrame(to_plot, geometry=[x['p'] for x in to_plot])
-        fig, ax = plt.subplots(figsize=(8,8), facecolor='black')
+        fig, ax = plt.subplots(figsize=(5,5), facecolor='black')
         gdf.plot(ax=ax, column='color', marker='.', markersize=16, cmap='cool')
         # Make the background black, both for the plot and all plots
         plt.style.use('dark_background')
@@ -314,12 +337,58 @@ def plot_grouped_route_trace_results(grouped):
         count += 1
 
 
+def tweet(gif_loc):
+    auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+    auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
+    api = tweepy.API(auth)
+    api.update_with_media(gif_loc, status='Today\'s peak hour of AC Transit bus traffic')
+
+
 # Run when this script is invoked
 if __name__ == '__main__':
-    # First pull down the previous day's images
-    gsutil cp  gs://ac-transit/traces/20180524/* busdata2/
+    while True:
+        # Make sure that busdata_raw exists
+        dest_dir = 'busdata_raw'
+        if not os.path.exists(dest_dir):
+            os.makedirs(dest_dir)
 
-    target_filepaths = get_busiest_hour_filepaths('busdata_raw/')
-    compiled = generate_trace_dfs_reference(target_filepaths)
-    grouped = clean_and_group_route_traces(compiled)
-    plot_grouped_route_trace_results(grouped)
+        # First pull down the previous day's images
+        tod = datetime.date.today().isoformat().replace('-', '')
+        formatted_command = 'gsutil cp gs://ac-transit/traces/{}/* {}/'.format(tod, dest_dir)
+        ret = os.system(formatted_command)
+        if ret != 0 :
+            print('The gustil command to pull down a day\'s worth of traces failed.')
+
+        # Make sure that output_dir exists, so resulting files can be saved to
+        # this director adn clear out previous outputs
+        output_dir = 'gif'
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
+        os.makedirs(output_dir)
+
+        target_filepaths = get_busiest_hour_filepaths('busdata_raw/')
+        compiled = generate_trace_dfs_reference(target_filepaths)
+        start, end = get_plot_timeframe(compiled)
+        grouped = clean_and_group_route_traces(compiled)
+        plot_grouped_route_trace_results(start, end, grouped)
+
+        command = 'convert -limit memory 100MB -delay 10 -loop 0 gif/*.png  gif/animate.gif'
+        ret = os.system(command)
+        if ret != 0 :
+            print('The convert imagemagick command to compile into gif failed.')
+
+        command = 'gifsicle -O1 gif/animate.gif -o gif/animate.gif'
+        ret = os.system(command)
+        if ret != 0 :
+            print('The gifsicle optimization step failed.')
+
+        # Now actually run the commands altogether
+        curr_day = time.strftime('%Y%m%d')
+        bash_cmd = 'sudo gsutil cp gif/animate.gif gs://ac-transit/daily_animated/{}.gif'.format(curr_day)
+        process = subprocess.Popen(['/bin/bash', '-c', bash_cmd])
+        process.wait()
+
+        tweet('gif/animate.gif')
+
+        # Sleep until tomorrow
+        time.sleep(86400)
