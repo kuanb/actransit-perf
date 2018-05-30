@@ -337,16 +337,10 @@ def plot_grouped_route_trace_results(start, end, grouped):
 
 
 def tweet(gif_loc):
-    # auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-    # auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
-    # api = tweepy.API(auth)
-    # api.update_with_media(gif_loc)
-    from twython import Twython
-    twitter = Twython(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_KEY, ACCESS_SECRET)
-    photo = open('gif/animate.gif', 'rb')
-    # response = twitter.upload_media(media=photo)
-    twitter.update_status(status='Today\'s peak hour') # , media_ids=[response['media_id']]
-
+    auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+    auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
+    api = tweepy.API(auth)
+    api.update_with_media(gif_loc)
 
 
 # Run when this script is invoked
@@ -382,4 +376,4 @@ if __name__ == '__main__':
     if ret != 0 :
         print('The convert imagemagick command to compile into gif failed.')
     else:
-        tweet('gif/animate.gif')
+        tweet('gif/328.png')
