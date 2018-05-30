@@ -337,10 +337,16 @@ def plot_grouped_route_trace_results(start, end, grouped):
 
 
 def tweet(gif_loc):
-    auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-    auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
-    api = tweepy.API(auth)
-    api.update_with_media(gif_loc)
+    # auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+    # auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
+    # api = tweepy.API(auth)
+    # api.update_with_media(gif_loc)
+
+    twitter = Twython(APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
+    photo = open('/gif/animate.gif', 'rb')
+    response = twitter.upload_media(media=photo)
+    twitter.update_status(status='', media_ids=[response['media_id']])
+
 
 
 # Run when this script is invoked
