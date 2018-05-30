@@ -363,8 +363,8 @@ if __name__ == '__main__':
     if ret != 0 :
         print('The gustil command to pull down a day\'s worth of traces failed.')
 
-    Make sure that output_dir exists, so resulting files can be saved to
-    this director adn clear out previous outputs
+    # Make sure that output_dir exists, so resulting files can be saved to
+    # this director adn clear out previous outputs
     output_dir = 'gif'
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
@@ -377,7 +377,6 @@ if __name__ == '__main__':
     plot_grouped_route_trace_results(start, end, grouped)
 
     command = 'convert -limit memory 100MB -delay 10 -loop 0 gif/*.png  gif/animate.gif'
-    command = 'echo foo'
     ret = os.system(command)
     if ret != 0 :
         print('The convert imagemagick command to compile into gif failed.')
