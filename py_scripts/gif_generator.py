@@ -346,45 +346,49 @@ def tweet(gif_loc):
 
 # Run when this script is invoked
 if __name__ == '__main__':
-    # # Make sure that busdata_raw exists
-    # dest_dir = 'busdata_raw'
-    # if not os.path.exists(dest_dir):
-    #     os.makedirs(dest_dir)
+    while True:
+        # Make sure that busdata_raw exists
+        dest_dir = 'busdata_raw'
+        if not os.path.exists(dest_dir):
+            os.makedirs(dest_dir)
 
-    # # First pull down the previous day's images
-    # tod = datetime.date.today().isoformat().replace('-', '')
-    # formatted_command = 'gsutil cp gs://ac-transit/traces/{}/* {}/'.format(tod, dest_dir)
-    # ret = os.system(formatted_command)
-    # if ret != 0 :
-    #     print('The gustil command to pull down a day\'s worth of traces failed.')
+        # First pull down the previous day's images
+        tod = datetime.date.today().isoformat().replace('-', '')
+        formatted_command = 'gsutil cp gs://ac-transit/traces/{}/* {}/'.format(tod, dest_dir)
+        ret = os.system(formatted_command)
+        if ret != 0 :
+            print('The gustil command to pull down a day\'s worth of traces failed.')
 
-    # # Make sure that output_dir exists, so resulting files can be saved to
-    # # this director adn clear out previous outputs
-    # output_dir = 'gif'
-    # if os.path.exists(output_dir):
-    #     shutil.rmtree(output_dir)
-    # os.makedirs(output_dir)
+        # Make sure that output_dir exists, so resulting files can be saved to
+        # this director adn clear out previous outputs
+        output_dir = 'gif'
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
+        os.makedirs(output_dir)
 
-    # target_filepaths = get_busiest_hour_filepaths('busdata_raw/')
-    # compiled = generate_trace_dfs_reference(target_filepaths)
-    # start, end = get_plot_timeframe(compiled)
-    # grouped = clean_and_group_route_traces(compiled)
-    # plot_grouped_route_trace_results(start, end, grouped)
+        target_filepaths = get_busiest_hour_filepaths('busdata_raw/')
+        compiled = generate_trace_dfs_reference(target_filepaths)
+        start, end = get_plot_timeframe(compiled)
+        grouped = clean_and_group_route_traces(compiled)
+        plot_grouped_route_trace_results(start, end, grouped)
 
-    # command = 'convert -limit memory 100MB -delay 10 -loop 0 gif/*.png  gif/animate.gif'
-    # ret = os.system(command)
-    # if ret != 0 :
-    #     print('The convert imagemagick command to compile into gif failed.')
+        command = 'convert -limit memory 100MB -delay 10 -loop 0 gif/*.png  gif/animate.gif'
+        ret = os.system(command)
+        if ret != 0 :
+            print('The convert imagemagick command to compile into gif failed.')
 
-    command = 'gifsicle -O1 gif/animate.gif -o gif/animate.gif'
-    ret = os.system(command)
-    if ret != 0 :
-        print('The gifsicle optimization step failed.')
+        command = 'gifsicle -O1 gif/animate.gif -o gif/animate.gif'
+        ret = os.system(command)
+        if ret != 0 :
+            print('The gifsicle optimization step failed.')
 
-    # Now actually run the commands altogether
-    curr_day = time.strftime('%Y%m%d')
-    bash_cmd = 'sudo gsutil cp gif/animate.gif gs://ac-transit/daily_animated/{}.gif'.format(curr_day)
-    process = subprocess.Popen(['/bin/bash', '-c', bash_cmd])
-    process.wait()
+        # Now actually run the commands altogether
+        curr_day = time.strftime('%Y%m%d')
+        bash_cmd = 'sudo gsutil cp gif/animate.gif gs://ac-transit/daily_animated/{}.gif'.format(curr_day)
+        process = subprocess.Popen(['/bin/bash', '-c', bash_cmd])
+        process.wait()
 
-    tweet('gif/animate.gif')
+        tweet('gif/animate.gif')
+
+        # Sleep until tomorrow
+        time.sleep(86400)
