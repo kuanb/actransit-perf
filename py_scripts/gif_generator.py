@@ -345,7 +345,7 @@ def tweet(gif_loc):
     twitter = Twython(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_KEY, ACCESS_SECRET)
     photo = open('gif/animate.gif', 'rb')
     response = twitter.upload_media(media=photo)
-    twitter.update_status(status='', media_ids=[response['media_id']])
+    twitter.update_status(status='Today\'s peak hour', media_ids=[response['media_id']])
 
 
 
