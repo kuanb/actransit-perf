@@ -370,10 +370,9 @@ if __name__ == '__main__':
     # grouped = clean_and_group_route_traces(compiled)
     # plot_grouped_route_trace_results(start, end, grouped)
 
-    command = 'convert -limit memory 350MB -delay 20 -loop 0 gif/*.png  gif/animate.gif'
-    command = 'echo foo'
+    command = 'convert -limit memory 100MB -delay 20 -loop 0 gif/*.png  gif/animate.gif'
     ret = os.system(command)
     if ret != 0 :
         print('The convert imagemagick command to compile into gif failed.')
     else:
-        tweet('gif/328.png')
+        tweet('gif/animate.gif')
