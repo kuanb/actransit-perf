@@ -5,6 +5,7 @@ import math
 import os
 import random
 import shutil
+import sys
 import time
 
 import dotenv
@@ -352,8 +353,15 @@ if __name__ == '__main__':
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
 
+        tod = None
+        # We can pass a system argument to manually set the day to eval
+        if len(sys.argv) > 1:
+            tod = sys.argv[1]
+        else:
+            yesterday = datetime.date.today() - datetime.timedelta(1)
+            tod = yesterday.isoformat().replace('-', '')
+
         # First pull down the previous day's images
-        tod = datetime.date.today().isoformat().replace('-', '')
         formatted_command = 'gsutil cp gs://ac-transit/traces/{}/* {}/'.format(tod, dest_dir)
         ret = os.system(formatted_command)
         if ret != 0 :
@@ -372,15 +380,21 @@ if __name__ == '__main__':
         grouped = clean_and_group_route_traces(compiled)
         plot_grouped_route_trace_results(start, end, grouped)
 
-        command = 'convert -limit memory 100MB -delay 10 -loop 0 gif/*.png -colors 64 -ordered-dither o8x8,8,8,4 +map -layers optimize gif/animate.gif'
-        ret = os.system(command)
-        if ret != 0 :
-            print('The convert imagemagick command to compile into gif failed.')
+        try:
+            command = 'convert -limit memory 100MB -delay 10 -loop 0 gif/*.png -colors 64 -ordered-dither o8x8,8,8,4 +map -layers optimize gif/animate.gif'
+            process = subprocess.Popen(['/bin/bash', '-c', command])
+            process.wait()
+            ret = os.system(command)
+        except Exception as e:
+            print('The convert imagemagick command to compile into gif failed: {}'.format(e))
 
-        command = 'gifsicle -O1 gif/animate.gif -o gif/animate.gif'
-        ret = os.system(command)
-        if ret != 0 :
-            print('The gifsicle optimization step failed.')
+        try:
+            command = 'gifsicle -O1 gif/animate.gif -o gif/animate.gif'
+            process = subprocess.Popen(['/bin/bash', '-c', command])
+            process.wait()
+            ret = os.system(command)
+        except Exception as e:
+            print('The gifsicle optimization step failed: {}'.format(e))
 
         # Now actually run the commands altogether
         curr_day = time.strftime('%Y%m%d')
