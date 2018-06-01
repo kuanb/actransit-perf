@@ -358,7 +358,7 @@ if __name__ == '__main__':
         if len(sys.argv) > 1:
             tod = sys.argv[1]
         else:
-            yesterday = datetime.date.today() - timedelta(1)
+            yesterday = datetime.date.today() - datetime.timedelta(1)
             tod = yesterday.isoformat().replace('-', '')
 
         # First pull down the previous day's images
