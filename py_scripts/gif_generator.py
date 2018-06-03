@@ -384,7 +384,6 @@ if __name__ == '__main__':
             command = 'convert -limit memory 100MB -delay 10 -loop 0 gif/*.png -colors 64 -ordered-dither o8x8,8,8,4 +map -layers optimize gif/animate.gif'
             process = subprocess.Popen(['/bin/bash', '-c', command])
             process.wait()
-            ret = os.system(command)
         except Exception as e:
             print('The convert imagemagick command to compile into gif failed: {}'.format(e))
 
@@ -392,7 +391,6 @@ if __name__ == '__main__':
             command = 'gifsicle -O1 gif/animate.gif -o gif/animate.gif'
             process = subprocess.Popen(['/bin/bash', '-c', command])
             process.wait()
-            ret = os.system(command)
         except Exception as e:
             print('The gifsicle optimization step failed: {}'.format(e))
 
